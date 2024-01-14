@@ -1,4 +1,5 @@
 ﻿using MagicVilla_VillaAPI.Data;
+using MagicVilla_VillaAPI.Logging;
 using MagicVilla_VillaAPI.Model;
 using MagicVilla_VillaAPI.Model.DTO;
 using Microsoft.AspNetCore.JsonPatch;
@@ -7,14 +8,15 @@ using Microsoft.Extensions.Logging;
 
 namespace MagicVilla_VillaAPI.Controllers
 {
-    // [Route("api/[controller]")]                                                //Commenting this to VillaAPI is the fixed API name as if someone changes the controller
-                                                                                  //name then API name will also get change then we have to change that wherever the API url is used.
+    // [Route("api/[controller]")]                   //Commenting this to VillaAPI is the fixed API name as if someone changes the controller
+                                                     //name then API name will also get change then we have to change that wherever the API url is used.
     [Route("api/VillaAPI")]
     [ApiController]
     public class VillaAPIController : ControllerBase
     {
         private ILogger _logger;
-        public VillaAPIController(ILogger logger)
+        //private ILogging _logger;
+        public VillaAPIController(ILogger<VillaAPIController> logger)
         {
             _logger = logger;
         }
@@ -27,7 +29,7 @@ namespace MagicVilla_VillaAPI.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<VillaDTO>> GetVillas()
         {
-            _logger.LogInformation(" GetVillas : getting all villas !");
+            _logger.LogInformation(message: " GetVillas : getting all villas !");
             return Ok(VillaStore.VillaList);
         }
 
@@ -47,16 +49,16 @@ namespace MagicVilla_VillaAPI.Controllers
         {
             if (Id == 0)
             {
-                _logger.LogError(" GetVilla : Id is 0");
+                _logger.LogError(message:" GetVilla : Id is 0");
                 return BadRequest();
             }
             var Villa = VillaStore.VillaList.FirstOrDefault(u => u.Id == Id);
             if(Villa == null)
             {
-                _logger.LogError(" GetVilla : no data is present for Id " + Id);
+                _logger.LogError(message: " GetVilla : no data is present for Id " + Id);
                 return NotFound();
             }
-            _logger.LogInformation(" GetVilla :succesfully get the data ");
+            _logger.LogInformation(message: " GetVilla :succesfully get the data ");
             return Ok(Villa);
         }
 
@@ -78,24 +80,24 @@ namespace MagicVilla_VillaAPI.Controllers
             if(VillaStore.VillaList.FirstOrDefault(u=>u.Name.ToLower() == villa.Name.ToLower()) != null)
             {
                 ModelState.AddModelError("CustomDuplicateNameError", "Villa Already Exist");
-                _logger.LogError(" CreateVilla : Already a villa with similar name exist !");
+                _logger.LogError(message: " CreateVilla : Already a villa with similar name exist !");
                 return BadRequest(ModelState);
             }    
             if(villa == null)
             {
-                _logger.LogError(" CreateVilla : Model is null !");
+                _logger.LogError(message: " CreateVilla : Model is null !");
                 return BadRequest();
             }
             if(villa.Id > 0)
             {
-                _logger.LogError(" CreateVilla: model Id is not 0 ");
+                _logger.LogError(message: " CreateVilla: model Id is not 0 ");
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
             villa.Id = VillaStore.VillaList.OrderByDescending(x => x.Id)
                                            .FirstOrDefault().Id + 1;
             VillaStore.VillaList.Add(villa);
 
-            _logger.LogInformation(" CreateVilla : succesfully created !");
+            _logger.LogInformation(message: " CreateVilla : succesfully created !");
             //return Ok(villa);
             return CreatedAtRoute("GetVilla", new { Id = villa.Id },villa);
         }
