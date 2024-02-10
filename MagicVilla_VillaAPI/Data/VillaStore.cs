@@ -10,14 +10,14 @@ namespace MagicVilla_VillaAPI.Data
                 {
                     Id = 1,
                     Name = "Villa1",
-                    Sqtft = 1200.30F,
+                    Sqft = 1200,
                     Occupancy = 10
                 },
                 new VillaDTO
                 {
                     Id = 2,
                     Name = "Villa2",
-                    Sqtft = 1800.00F,
+                    Sqft = 1800,
                     Occupancy = 20
                 }
             };
