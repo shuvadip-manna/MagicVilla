@@ -3,6 +3,7 @@ using MagicVilla_VillaAPI.Data;
 using MagicVilla_VillaAPI.Logging;
 using MagicVilla_VillaAPI.Model;
 using MagicVilla_VillaAPI.Model.DTO;
+using MagicVilla_VillaAPI.Repository.IRepository;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,15 +19,18 @@ namespace MagicVilla_VillaAPI.Controllers
     {
         private ILogger _logger;
         //private ILogging _logger;
-        private readonly ApplicationDbContext _dbContext;
+        //private readonly ApplicationDbContext _dbContext;
+        private readonly IVillaRepository _villaRepository;
         private readonly IMapper _mapper;
         public VillaAPIController(ILogger<VillaAPIController> logger
-                                  , ApplicationDbContext dbContext
-                                  , IMapper mapper)
+                                 // , ApplicationDbContext dbContext
+                                  , IMapper mapper
+                                  , IVillaRepository villaRepository)
         {
             _logger = logger;
-            _dbContext = dbContext;
+            //_dbContext = dbContext;
             _mapper = mapper;
+            _villaRepository = villaRepository;
         }
 
         /// <summary>
@@ -38,7 +42,7 @@ namespace MagicVilla_VillaAPI.Controllers
         public async Task<ActionResult<IEnumerable<VillaDTO>>> GetVillas()
         {
             _logger.LogInformation(message: " GetVillas : getting all villas !");
-            IEnumerable<Villa> villas = await _dbContext.Villas.ToListAsync();
+            IEnumerable<Villa> villas = await _villaRepository.GetAllAsync();
             return Ok(_mapper.Map<List<VillaDTO>>(villas));
         }
 
@@ -61,7 +65,7 @@ namespace MagicVilla_VillaAPI.Controllers
                 _logger.LogError(message: " GetVilla : Id is 0");
                 return BadRequest();
             }
-            var Villa = await _dbContext.Villas.FirstOrDefaultAsync(u => u.Id == Id);
+            var Villa = await _villaRepository.GetAsync(u => u.Id == Id);
             if (Villa == null)
             {
                 _logger.LogError(message: " GetVilla : no data is present for Id " + Id);
@@ -86,7 +90,7 @@ namespace MagicVilla_VillaAPI.Controllers
             //{
             //    return BadRequest();
             //}
-            if (await _dbContext.Villas.FirstOrDefaultAsync(u => u.Name.ToLower() == villa.Name.ToLower()) != null)
+            if (await _villaRepository.GetAsync(u => u.Name.ToLower() == villa.Name.ToLower()) != null)
             {
                 ModelState.AddModelError("CustomDuplicateNameError", "Villa Already Exist");
                 _logger.LogError(message: " CreateVilla : Already a villa with similar name exist !");
@@ -119,8 +123,8 @@ namespace MagicVilla_VillaAPI.Controllers
             //    //Id = villa.Id,
             //};
 
-            await _dbContext.AddAsync(model);
-            await _dbContext.SaveChangesAsync();
+            await _villaRepository.CreateAsync(model);
+            //await _dbContext.SaveChangesAsync();
 
             _logger.LogInformation(message: " CreateVilla : succesfully created !");
             //return Ok(villa);
@@ -143,7 +147,7 @@ namespace MagicVilla_VillaAPI.Controllers
                 return BadRequest();
             }
 
-            var villa = await _dbContext.Villas.FirstOrDefaultAsync(u => u.Id == Id);
+            var villa = await _villaRepository.GetAsync(u => u.Id == Id);
 
             if (villa == null)
             {
@@ -151,8 +155,8 @@ namespace MagicVilla_VillaAPI.Controllers
                 return NotFound();
             }
 
-            _dbContext.Remove(villa);
-            await _dbContext.SaveChangesAsync();
+            await _villaRepository.RemoveAsync(villa);
+           // await _dbContext.SaveChangesAsync();
             _logger.LogInformation(message: " DeleteVilla : Delete successfull ");
             return NoContent();
         }
@@ -173,7 +177,7 @@ namespace MagicVilla_VillaAPI.Controllers
                 _logger.LogError(message: "UpdateVilla : Id doesnt match with the model Id ");
                 return BadRequest();
             }
-            var data = await _dbContext.Villas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == Id);
+            var data = await _villaRepository.GetAsync(x => x.Id == Id,false);
             if (data == null)
             {
                 _logger.LogError(message: " updatevilla : no data is present for id " + Id);
@@ -195,8 +199,8 @@ namespace MagicVilla_VillaAPI.Controllers
             //    Id = villa.Id,
             //};
 
-            _dbContext.Update(model);
-            await _dbContext.SaveChangesAsync();
+            await _villaRepository.UpdateAsync(model);
+            //await _dbContext.SaveChangesAsync();
             _logger.LogInformation(message: " UpdateVilla : Update successfull ");
             return NoContent();
         }
@@ -217,7 +221,7 @@ namespace MagicVilla_VillaAPI.Controllers
                 _logger.LogError(message: "UpdatePartialVilla : Id is 0 or the model is null");
                 return BadRequest();
             }
-            var villa = await _dbContext.Villas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == Id);
+            var villa = await _villaRepository.GetAsync(x => x.Id == Id,false);
 
             if (villa == null)
             {
@@ -254,8 +258,8 @@ namespace MagicVilla_VillaAPI.Controllers
             //    Id = villaDto.Id,
             //};
 
-            _dbContext.Update(model);
-            await _dbContext.SaveChangesAsync();
+            await _villaRepository.UpdateAsync(model);
+            //await _dbContext.SaveChangesAsync();
             if (!ModelState.IsValid)
             {
                 _logger.LogError(message: " UpdatePartialVilla : Model is Invalid");
