@@ -1,10 +1,26 @@
 using MagicVilla_Web;
+using MagicVilla_Web.Services;
+using MagicVilla_Web.Services.IServices;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+var applicationName = builder.Configuration.GetValue<string>("ApplicationName");     
+
+Log.Logger = new LoggerConfiguration().MinimumLevel.Debug()
+            .WriteTo.File("log/" + applicationName + ".txt", rollingInterval: RollingInterval.Day, fileSizeLimitBytes: 100000)
+            .CreateLogger();
+
+builder.Host.UseSerilog();
+
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddHttpClient<IVillaService, VillaService>();
+builder.Services.AddScoped<IVillaService, VillaService>();
+
 
 var app = builder.Build();
 
